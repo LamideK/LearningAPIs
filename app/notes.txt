@@ -1,0 +1,16 @@
+- Activate your venv by referencing the path
+- If you get the ASGI error, put the package name to call main, as in "app.main:app"
+- For whatever type of database you use with FASTAPI, the corresponding driver needs to be installed (like selenium and webdrivers)
+- SQLAlchemy is an ORM, and this is what is leveraged on to connect to the database rather than hardcoding it in the main file
+- main.py should not speak directly to db, so a file should be created specifically to speak to the sqlalchemy orm
+- Pydantic models define the structure of the response/request; SQLAlchemy models define the structure of the table, including CRUD Actions
+- to get SQL query, print the post(query) object
+- orm_mode makes the pydantic models to read the response even if it is not a dictionary (ie SQLAlchemy model)
+
+
+OBSERVATIONS
+* When using pydantic model with get method for list of posts, it raised a value_error type for missing field, and this was fixed by converting JSON to List 
+
+
+TODOS
+- Consider updating the db to have a separate column for timestamping updates

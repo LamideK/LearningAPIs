@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from random import randrange
 import psycopg2
 import psycopg
@@ -9,7 +9,7 @@ import psycopg_binary
 from psycopg2.extras import RealDictCursor
 import time
 from sqlalchemy.orm import Session
-from . import models
+from . import models, schemas
 from .database import engine, get_db
 
 #from psycopg2.extras import RealDictCursor
@@ -19,17 +19,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-
-
-
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True #Optional field with default value
-    #rating : Optional[int] = None #Optional field that defaults to none
-    #user: str
-
-#connect to the database // Also, try again with plain psycopg
+#connect to the database 
 while True:
     try:
         conn = psycopg2.connect(host= 'localhost', database= 'FASTAPI', user= 'postgres', password= 'passw0rd', cursor_factory= RealDictCursor)  #, cursor_factory= RealDictCursor
@@ -41,98 +31,55 @@ while True:
         time.sleep(4) #Best for testing against internet problems, not authentication
 
 
-# for put method
-#class PostUpdate(Post):
-#    super(t, obj)
-
-my_posts = [{"title": "title of post", "content": "content of post", "id":1}, {"title": "A random title", "content": "content of post again", "id":2}]
-
 @app.get('/') # this is called a decorator
 async def root():
-    return {"message": "Hello LamBam"}
+    return {"message": "Hello..."}
 
-
-@app.get('/sqlalchemy')
-def test_posts(db: Session = Depends(get_db)):
-
-    posts = db.query(models.Post).all()
-    return{"data": posts}
-
-def find_post(id):
-    for p in my_posts:
-        if p['id'] == id: #comparing string and int won't work
-            return p 
-
-def find_post_index(id):
-    for i, p in enumerate(my_posts):
-        if p['id'] == id:
-            return i
-
-
-
-@app.get('/posts')
+@app.get('/posts', response_model= List[schemas.Post])
 async def get_posts(db: Session= Depends(get_db)):
-    '''
-    USING DIRECT SQL QUERY
-    cursor.execute("""Select * from posts""")
-    posts = cursor.fetchall()
-    '''
-
     posts = db.query(models.Post).all()
-    return{"data": posts}
+    return posts
 
 
-@app.post('/newpost', status_code=status.HTTP_201_CREATED)
-async def create_posts(new_post: Post, db: Session= Depends(get_db)):
-    '''
-    cursor.execute("""INSERT INTO posts(title, content, published) values (%s, %s, %s) RETURNING *""" , (new_post.title, new_post.content, new_post.published))
-    post = cursor.fetchone()
-    conn.commit()
-    '''
-
-    post = models.Post(title= new_post.title, content= new_post.content, published= new_post.published)
-    db.add(post)
+@app.post('/newpost', status_code=status.HTTP_201_CREATED, response_model= schemas.Post)
+async def create_posts(post: schemas.PostCreate, db: Session= Depends(get_db)):
+    new_post = models.Post(**post.dict()) #this avoids having to reference each model column individually
+    db.add(new_post)
     db.commit()
-    db.refresh(post)
-    #post =db.query(models.Post)
-    return{"data successfully added": post}
+    db.refresh(new_post)
+    return new_post
 
 
-@app.get('/posts/{id}') #id is known as a path parameter here
-async def get_post(id: int):
-    cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)) )
-    post = cursor.fetchone()
-    if not post:
+@app.get('/posts/{id}', response_model= schemas.Post) #id is known as a path parameter here
+async def get_post(id: int, db: Session= Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == id).first()
+    
+    if not post:  
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
         detail=f"post with id {id} not found")
-    return{'post_detail': post}
-
-# title str, content str
+    return post
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_post(id:int):
-    cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (str(id)))
-    deleted_post = cursor.fetchone()
-    conn.commit()
+async def delete_post(id:int,  db: Session= Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == id)
 
 # might tweak
-    if deleted_post == None:
+    if post.first() == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail=f"post with id {id} not found")
      #return{"message: ": "post successfully deleted"} #preferred
-    return Response(status_code=status.HTTP_204_NO_CONTENT) #this is standard practice
+    post.delete(synchronize_session= False) 
+    db.commit()
 
 
-@app.put('/posts/{id}')
-async def update_post(id: int, post: Post):
-    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, str(id)))
-    updated_post = cursor.fetchone()
-    conn.commit()
-
-    if updated_post == None:
+@app.put('/posts/{id}', response_model= schemas.Post)
+async def update_post(id: int, post_to_update: schemas.PostCreate, db: Session= Depends(get_db)):
+    
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    post = post_query.first()
+    if post == None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail=f"post with id {id} not found")
 
-    return{'data: ': updated_post}
+    post_query.update(post_to_update.dict(), synchronize_session= False)
+    db.commit()
 
-""" @app.patch('/posts/{id}')
-async def update_part_of_post(id: int, post: Post): """
-
+    return post_query.first()
