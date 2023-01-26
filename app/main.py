@@ -9,8 +9,9 @@ import psycopg_binary
 from psycopg2.extras import RealDictCursor
 import time
 from sqlalchemy.orm import Session
-from . import models, schemas
+from . import models, schemas, utils
 from .database import engine, get_db
+from .utils import hash
 
 #from psycopg2.extras import RealDictCursor
 #from psycopg_binary.extras import RealDictCursor
@@ -22,7 +23,7 @@ app = FastAPI()
 #connect to the database 
 while True:
     try:
-        conn = psycopg2.connect(host= 'localhost', database= 'FASTAPI', user= 'postgres', password= 'passw0rd', cursor_factory= RealDictCursor)  #, cursor_factory= RealDictCursor
+        conn = psycopg2.connect(host= 'localhost', database= 'fastapi', user= 'postgres', password= 'passw0rd', cursor_factory= RealDictCursor)  #, cursor_factory= RealDictCursor
         cursor = conn.cursor()
         print('Successful')
         break
@@ -71,7 +72,7 @@ async def delete_post(id:int,  db: Session= Depends(get_db)):
     db.commit()
 
 
-@app.put('/posts/{id}', response_model= schemas.Post)
+@app.put('/posts/{id}', response_model= schemas.PostCreate)
 async def update_post(id: int, post_to_update: schemas.PostCreate, db: Session= Depends(get_db)):
     
     post_query = db.query(models.Post).filter(models.Post.id == id)
@@ -83,3 +84,18 @@ async def update_post(id: int, post_to_update: schemas.PostCreate, db: Session= 
     db.commit()
 
     return post_query.first()
+
+
+@app.post('/newuser', status_code=status.HTTP_201_CREATED, response_model= schemas.UserResponse)
+async def create_user(user: schemas.UserCreate, db: Session= Depends(get_db)):
+
+    #hash the password
+    hashed_pwrd = utils.hash(user.password)
+    user.password = hashed_pwrd
+
+    new_user = models.User(**user.dict()) 
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+# note: got an error when i tried to reuse the same username after testing something that failed

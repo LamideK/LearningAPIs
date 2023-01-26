@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 class PostBase(BaseModel):
@@ -8,6 +8,9 @@ class PostBase(BaseModel):
     #rating : Optional[int] = None #Optional field that defaults to none
     #user: str
 
+    class Config:
+        orm_mode = True
+
 class PostCreate(PostBase):
     pass
 
@@ -15,6 +18,15 @@ class Post(PostBase):
     id: int
     created_at: datetime
 
+
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
 
     class Config:
         orm_mode = True
