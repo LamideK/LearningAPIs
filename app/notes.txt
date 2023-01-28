@@ -10,7 +10,19 @@
 
 OBSERVATIONS
 * When using pydantic model with get method for list of posts, it raised a value_error type for missing field, and this was fixed by converting JSON to List 
-
+* To import from two directories above, use two dots instead of just one.
+* Using a router implies the prefix applies to all routes. All
 
 TODOS
 - Consider updating the db to have a separate column for timestamping updates
+
+Security\Precautionary measures put in place for the APIs
+- Typing: Defining the argument data type to type check
+- Response models: Rather than returning all data which isn't best practice, define he response models for the API calls
+
+Libraries
+- FASTAPI: Framework for RESTful APIs
+- SQLAlchemy: ORM for communicating between DB and Py programs
+- Passlib: for password hashing & algorithms
+- Router: To access endpoints in different folders
+

@@ -27,6 +27,14 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
+    created_at: datetime
 
     class Config:
         orm_mode = True
+
+class AdminUserRespone(UserResponse):
+    pass
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
