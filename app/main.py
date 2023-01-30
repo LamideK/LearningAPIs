@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from . import models, schemas, utils
 from .database import engine, get_db
 from .utils import hash
-from .routers import users, post
+from .routers import users, post, auth
 
 #from psycopg2.extras import RealDictCursor
 #from psycopg_binary.extras import RealDictCursor
@@ -12,6 +12,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.include_router(post.router)
 app.include_router(users.router)
+app.include_router(auth.router)
 
 '''
 #connect to the database 
