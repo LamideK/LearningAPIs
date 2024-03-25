@@ -1,46 +1,6 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 from typing import Optional
-
-"""
-class PostBase(BaseModel):
-    title: str
-    content: str
-    published: bool = True #Optional field with default value
-    #rating : Optional[int] = None #Optional field that defaults to none
-    #user: str
-
-class CreatePost(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-
-class UpPost(BaseModel):
-    title: str
-    content: str
-    #published: bool = True
-
-"""
-
-
-class PostBase(BaseModel):
-    title: str
-    content: str
-    published: bool = True  # Optional field with default value
-    # rating : Optional[int] = None #Optional field that defaults to none
-    # user: str
-
-    class Config:
-        orm_mode = True
-
-
-class PostCreate(PostBase):
-    pass
-
-
-class Post(PostBase):
-    id: int
-    created_at: datetime
 
 
 class UserCreate(BaseModel):
@@ -68,6 +28,27 @@ class UserLogin(BaseModel):
     password: str
 
 
+class PostBase(BaseModel):
+    title: str
+    content: str
+    published: bool = True  # Optional field with default value
+    # rating : Optional[int] = None #Optional field that defaults to none
+
+    class Config:
+        from_attributes = True
+
+
+class PostCreate(PostBase):
+    pass
+
+
+class Post(PostBase):
+    id: int
+    created_at: datetime
+    owner_id: int
+    owner: UserResponse
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -75,4 +56,11 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[str] = None
-    expires: Optional[datetime]
+    expires: Optional[datetime] = None
+
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
+
+class Vote(BaseModel):
+    post_id: int
+    dir: bool
