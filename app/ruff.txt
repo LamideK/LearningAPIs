@@ -1,0 +1,154 @@
+
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for TokenData id Input should be a valid string [type=string_type, input_value=3, input_type=int]
+
+try:
+except HTTPException as exc:
+        print(repr(exc.errors()[0]["type"]))
+
+
+
+get list endpoint keeps failing, says input params are missing
+>>> fastapi.exceptions.ResponseValidationError: 1 validation errors:
+  {'type': 'list_type', 'loc': ('response',), 'msg': 'Input should be a valid list', 'input': None, 'url': 'https://errors.pydantic.dev/2.6/v/list_type'}
+
+
+      result = (
+        db.query(models.Post, func.count(models.Vote.post_id).label("upvotes"))
+        .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
+        .group_by(models.Post.id)
+        .all()
+    )
+
+
+@router.get("/", response_model=List[schemas.PostOut])  #
+async def get_posts(
+    db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)
+):
+    posts = db.query(models.Post).all()
+    # for user specific post: posts = db.query(models.Post).filter(mmodels.Post.owner_id == current_user.id).all()
+
+    result = (
+        db.query(models.Post, func.count(models.Vote.post_id).label("upvotes"))
+        .outerjoin(models.Vote)
+        .filter(models.Vote.post_id == models.Post.id)
+        .group_by(models.Post.id)
+        .all()
+        # .all()
+    )
+
+    # print(result)
+    # results = result.__dict__
+    # results = (dict(row) for row in result)
+    # print(results)
+
+    for r in result:
+        print(r)
+
+    # return f"result is {results}"
+
+    models.Post.id,
+            models.Post.title,
+            models.Post.content,
+            models.Post.owner_id
+
+>>>> ValueError: [TypeError('cannot convert dictionary update sequence element #0 to a sequence'), TypeError('vars() argument must have __dict__ attribute')]
+
+
+result = (
+        db.query(
+            models.Post,
+            func.count(models.Vote.post_id).label("upvotes"),
+        )
+        .outerjoin(models.Vote)
+        .filter(models.Vote.post_id == models.Post.id)
+        .group_by(models.Post.id)
+        .all()
+    )
+
+    # .all()
+
+    print(result)
+    formatted_results = []
+    for post, upvotes in result:
+        post_dict = post.__dict__
+        post_dict["upvotes"] = upvotes
+        formatted_results.append(post_dict)
+
+    # print(formatted_results)
+    print(formatted_results)
+
+****
+PROBLEM: Instance state of one of the schema objects referenced as a data type was conflicting with the session API and i can't tell why
+
+[{'_sa_instance_state': <sqlalchemy.orm.state.InstanceState object at 0x000001F3F6E75130>, 
+'content': 'Content of whyyy 1 awaited post', 
+'id': 4, 
+'created_at': datetime.datetime(2024, 3, 16, 4, 10, 34, 132467, tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=72000))), 
+'owner_id': 3, 
+'title': 'My logged whyyy 1 Post', 
+'published': True, 
+'upvotes': 1}, 
+
+"content": "Content of whyyy 1 awaited post",
+        "id": 4,
+        "created_at": "2024-03-16T04:10:34.132467-04:00",
+        "owner_id": 3,
+        "published": true,
+        "title": "My logged whyyy 1 Post",
+        "upvotes": 1
+***
+subquery = select([func.avg(Employee.salary).label("avg_salary")]).group_by(
+    Employee.department
+)
+
+query = (
+    select([Employee, subquery.c.avg_salary])
+    .select_from(Employee)
+    .join(subquery, Employee.department == subquery.c.department)
+)
+
+
+
+
+# Create a subquery that returns the average salary for each department
+
+subquery = select(
+    [models.Vote.user_id, func.count(models.Vote.post_id).label("upvotes")]
+).group_by(models.Vote.post_id.subquery())
+
+# Create a main query that selects all employees and their department's average salary
+
+qquery = (select[models.Post, subquery.c.upvotes]).join(
+    subquery, models.Post.id == subq.c.post_id
+)
+
+# Execute the query and print the results
+output = db.execute(qquery)
+print(qquery)
+for x in output:
+    print(x)o
+
+
+ {'type': 'missing', 'loc': ('response', 0, 'owner'), 
+ 'msg': 'Field required', 'input': {'_sa_instance_state': <sqlalchemy.orm.state.InstanceState object at 0x00000120D9690230>, 
+ 'content': 'Content of whyyy 1 awaited post', 
+ 'id': 4, 
+ 'created_at': datetime.datetime(2024, 3, 16, 4, 10, 34, 132467, tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=72000))), 'owner_id': 3, 'published': True, 'title': 'My logged whyyy 1 Post', 
+'upvotes': 1}, 'url': 'https://errors.pydantic.dev/2.6/v/missing'} 
+
+
+
+  {'type': 'missing', 
+  
+  'loc': ('response', 0, 'owner'), 
+
+  'msg': 'Field required', 
+
+  'input': {'content': 'Content of whyyy 1 awaited post', 
+    'id': 4, 
+    'created_at': '2024-03-16T04:10:34.132467-04:00', 
+    'owner_id': 3, 
+    'title': 'My logged whyyy 1 Post', 
+    'published': True, 
+    'upvotes': 1}, 
+    'url': 'https://errors.pydantic.dev/2.6/v/missing'}

@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int
 
     class Config:
-        env_file = ".env"
+        env_file = "C:\\Users\\Lenovo core i5\\VSCode\\FASTAPI\\.env"
 
 
 settings = Settings()

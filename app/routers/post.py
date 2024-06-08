@@ -1,20 +1,56 @@
 from fastapi import status, HTTPException, Depends, APIRouter
-from typing import List, Optional
-from sqlalchemy.orm import Session
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+import json
+from pydantic import parse_obj_as
+from typing import List, Optional, Any
+from sqlalchemy.orm import Session, join
+from sqlalchemy import func, outerjoin, select, values, label, inspect
 import models, schemas, oauth2
 from database import get_db
 
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
+"""
+def JSONify(xx):
+    formatted_results = []
+    for post, upvotes in xx:
+        xx_dict = xx.__dict__ 
+        xx_dict["upvotes"] = upvotes
+        formatted_results.append(xx_dict)
+        print(formatted_results)
 
-@router.get("/", response_model=schemas.Post)
+    return parse_obj_as(List[schemas.OutPost], formatted_results)
+"""
+
+
+@router.get("/")  # Endpoint 100% needs to be optimized
 async def get_posts(
-    db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(oauth2.get_current_user),
 ):
     posts = db.query(models.Post).all()
     # for user specific post: posts = db.query(models.Post).filter(mmodels.Post.owner_id == current_user.id).all()
-    return posts
+
+    result = (
+        db.query(
+            models.Post,
+            func.count(models.Vote.post_id).label("upvotes"),
+        )
+        .outerjoin(models.Vote)
+        .filter(models.Vote.post_id == models.Post.id)
+        .group_by(models.Post.id)
+        .all()
+    )
+
+    formatted_results = []
+    for post, upvotes in result:
+        post_dict = post.__dict__
+        post_dict["upvotes"] = upvotes
+        formatted_results.append(post_dict)
+        print(formatted_results)
+    return parse_obj_as(List[schemas.OutPost], formatted_results)
 
 
 @router.get("/limit", response_model=List[schemas.Post])
@@ -55,26 +91,47 @@ async def create_posts(
 # bug: failed user verification returns HTTP_404
 
 
-@router.get(
-    "/{id}", response_model=schemas.Post
-)  # id is known as a path parameter here
+@router.get("/{id}")  # id is known as a path parameter here
 async def get_post(
     id: int,
     db: Session = Depends(get_db),
     current_user: int = Depends(oauth2.get_current_user),
 ):
-    post = db.query(models.Post).filter(models.Post.id == id).first()
+    # post = db.query(models.Post).filter(models.Post.id == id).first()
 
-    if not post:
+    result = (
+        db.query(
+            models.Post,
+            func.count(models.Vote.post_id).label("upvotes"),
+        )
+        .outerjoin(models.Vote)
+        .filter(models.Vote.post_id == models.Post.id)
+        .group_by(models.Post.id)
+        .all()
+    )
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id {id} not found"
         )
+
+    formatted_results = []
+    for post, upvotes in result:
+        post_dict = post.__dict__
+        post_dict["upvotes"] = upvotes
+        formatted_results.append(post_dict)
+    return formatted_results
+
+    # Consider a different method/function for optimization
+
     """
+    
+
     For user specific post
     if post.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
     """
-    return post
+
+    return parse_obj_as(List[schemas.OutPost], formatted_results)  # post
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

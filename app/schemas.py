@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+from models import Post, User, Vote
 
 
 class UserCreate(BaseModel):
@@ -47,6 +48,30 @@ class Post(PostBase):
     created_at: datetime
     owner_id: int
     owner: UserResponse
+
+    class Config:
+        from_attributes = True
+
+
+class PostOut(PostBase):
+    post: List[Post]
+    upvotes: int
+
+    class Config:
+        from_attributes = True
+
+
+class OutPost(PostBase):
+    title: str
+    content: str
+    published: bool = True
+    id: int
+    created_at: datetime
+    owner_id: int
+    # owner: UserResponse
+    upvotes: int
+
+    # orm_model =
 
 
 class Token(BaseModel):

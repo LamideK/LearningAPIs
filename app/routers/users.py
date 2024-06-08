@@ -35,3 +35,6 @@ async def get_user(id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND, detail=f"user with id {id} not found"
         )
     return user
+
+
+# Consider: User detail update & Active

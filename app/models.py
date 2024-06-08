@@ -20,7 +20,7 @@ class Post(Base):
     )  # consider ondelete= default
     # consider FK as username
 
-    owner = relationship("User")  # personal review on functionality
+    owner = relationship("User")
 
 
 class User(Base):
@@ -30,6 +30,7 @@ class User(Base):
     username = Column(String, nullable=False, unique=True)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
+    phone_no = Column(String, nullable=True)
     created_at = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
@@ -44,5 +45,5 @@ class Vote(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
     post_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+        Integer, ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True
     )
